@@ -1,1 +1,1 @@
-# oo2-cuoora-refactoring
+# TP 2 OO2 - CuOOra Refactoring
