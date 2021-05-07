@@ -23,24 +23,24 @@ User class >> username: aUsername password: aPassword questionRetriever: aQuesti
 		yourself
 ]
 
-{ #category : #accessing }
+{ #category : #adding }
 User >> addAnswer: anAnswer [
 	answers add: anAnswer 
 
 ]
 
-{ #category : #accessing }
+{ #category : #adding }
 User >> addQuestion: aQuestion [
 	questions add: aQuestion
 ]
 
-{ #category : #accessing }
+{ #category : #adding }
 User >> addTopic: aTopic [
 	topics add: aTopic 
 
 ]
 
-{ #category : #accessing }
+{ #category : #adding }
 User >> addVote: aVote [
 	votes add: aVote
 ]
@@ -50,7 +50,7 @@ User >> answers [
 	^ answers
 ]
 
-{ #category : #accessing }
+{ #category : #adding }
 User >> follow: aUser [
 	following add: aUser 
 ]
@@ -62,12 +62,11 @@ User >> following [
 
 { #category : #initialize }
 User >> initialize [
-
-	questions := OrderedCollection new.  
-	answers := OrderedCollection new. 
-	topics := OrderedCollection new. 
-	following := OrderedCollection new. 
-	votes := OrderedCollection new.
+	questions := OrderedCollection new.
+	answers := OrderedCollection new.
+	topics := OrderedCollection new.
+	following := OrderedCollection new.
+	votes := OrderedCollection new
 ]
 
 { #category : #accessing }
@@ -95,7 +94,7 @@ User >> questions [
 	^ questions
 ]
 
-{ #category : #accessing }
+{ #category : #retrieving }
 User >> questionsOfInterest [
 	^ questionRetriever retrieveQuestions: self.
 ]

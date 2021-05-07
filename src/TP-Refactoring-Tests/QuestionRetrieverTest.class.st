@@ -123,10 +123,10 @@ QuestionRetrieverTest >> setUp [
 	cuoora addQuestion: questionUser1TopicOO1 forUser:user1.
 	cuoora addQuestion: questionUser3TopicOO2 forUser:user3.
 	
-	socialRetriever := QuestionRetriever new: cuoora and: #social.
-	topicsRetriever := QuestionRetriever new: cuoora and: #topics.
-	newsRetriever := QuestionRetriever new: cuoora and: #news.
-	popularTodayRetriever := QuestionRetriever new: cuoora and: #popularToday.
+	socialRetriever := SocialQuestionRetriever newForCuOOra: cuoora.
+	topicsRetriever := TopicsQuestionRetriever newForCuOOra: cuoora.
+	newsRetriever := NewsQuestionRetriever newForCuOOra: cuoora.
+	popularTodayRetriever := PopularTodayQuestionRetriever newForCuOOra: cuoora
 ]
 
 { #category : #testing }

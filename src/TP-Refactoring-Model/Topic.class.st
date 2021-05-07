@@ -17,7 +17,7 @@ Topic class >> name: aName description: aDescription [
 		yourself
 ]
 
-{ #category : #accessing }
+{ #category : #adding }
 Topic >> addQuestion: aQuetion [
 	questions add: aQuetion 
 ]

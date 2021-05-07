@@ -32,6 +32,11 @@ CuOOra >> addUser: aUser [
 
 ]
 
+{ #category : #retrieving }
+CuOOra >> averageVotes: aNumber [
+	^ (questions sum: [ :q | q positiveVotes size ]) / aNumber
+]
+
 { #category : #initialize }
 CuOOra >> initialize [
 	users := OrderedCollection new.
