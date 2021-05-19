@@ -37,6 +37,19 @@ CuOOra >> averageVotes: aNumber [
 	^ (questions sum: [ :q | q positiveVotes size ]) / aNumber
 ]
 
+{ #category : #retrieving }
+CuOOra >> getPopularTodayQuestions [
+	^ self getTodayQuestions
+		select: [ :q | 
+			q positiveVotesCount
+				>= (self averageVotes: self getTodayQuestions size) ]
+]
+
+{ #category : #retrieving }
+CuOOra >> getTodayQuestions [
+	^ self questions select: [ :q | q timestamp asDate = Date today ]
+]
+
 { #category : #initialize }
 CuOOra >> initialize [
 	users := OrderedCollection new.

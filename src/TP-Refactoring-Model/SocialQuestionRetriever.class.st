@@ -6,5 +6,5 @@ Class {
 
 { #category : #retrieving }
 SocialQuestionRetriever >> getQuestionsFor: aUser [
-	^ aUser following flatCollect: [ :follow | follow questions ]
+	^ aUser getFollowingUsersQuestions
 ]

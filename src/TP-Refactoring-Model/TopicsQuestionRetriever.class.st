@@ -6,6 +6,6 @@ Class {
 
 { #category : #retrieving }
 TopicsQuestionRetriever >> getQuestionsFor: aUser [
-	^ aUser topics flatCollect: [ :topic | topic questions ]
+	^ aUser getFollowingTopicsQuestions
 
 ]

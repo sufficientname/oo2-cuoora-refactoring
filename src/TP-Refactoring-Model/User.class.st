@@ -60,6 +60,16 @@ User >> following [
 	^ following
 ]
 
+{ #category : #retrieving }
+User >> getFollowingTopicsQuestions [
+	^ topics flatCollect: [ :topic | topic questions ]
+]
+
+{ #category : #retrieving }
+User >> getFollowingUsersQuestions [
+	^ following flatCollect: [ :follow | follow questions ]
+]
+
 { #category : #initialize }
 User >> initialize [
 	questions := OrderedCollection new.

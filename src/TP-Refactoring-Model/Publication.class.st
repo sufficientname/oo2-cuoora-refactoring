@@ -41,6 +41,11 @@ Publication >> positiveVotes [
 	^ votes select: [ :vote | vote isLike ]
 ]
 
+{ #category : #retrieving }
+Publication >> positiveVotesCount [
+	^ self positiveVotes size
+]
+
 { #category : #accessing }
 Publication >> timestamp [
 	^ timestamp

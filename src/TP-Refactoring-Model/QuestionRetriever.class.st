@@ -22,12 +22,10 @@ QuestionRetriever >> getQuestionsFor: aUser [
 	self subclassResponsibility 
 ]
 
-{ #category : #private }
-QuestionRetriever >> limitAndSort: aQuestionCollection withoutQuestionsFrom: aUser [
-	^ ((aQuestionCollection
-		asSortedCollection: [ :a :b | a positiveVotes size > b positiveVotes size ])
-		last: (self questionsLimitFor: aQuestionCollection))
-		reject: [ :q | q user = aUser ]
+{ #category : #retrieving }
+QuestionRetriever >> limitQuestions: aQuestionCollection [
+	^ aQuestionCollection
+		last: (self questionsLimit min: aQuestionCollection size)
 ]
 
 { #category : #private }
@@ -35,14 +33,14 @@ QuestionRetriever >> questionsLimit [
 	^ 100
 ]
 
-{ #category : #private }
-QuestionRetriever >> questionsLimitFor: aQuestionCollection [
-	^ self questionsLimit min: aQuestionCollection size
+{ #category : #retrieving }
+QuestionRetriever >> retrieveQuestions: aUser [
+	^ (self
+		limitQuestions: (self sortQuestions: (self getQuestionsFor: aUser)))
+		reject: [ :q | q user = aUser ]
 ]
 
 { #category : #retrieving }
-QuestionRetriever >> retrieveQuestions: aUser [
-	^ self
-		limitAndSort: (self getQuestionsFor: aUser)
-		withoutQuestionsFrom: aUser
+QuestionRetriever >> sortQuestions: aQuestionCollection [
+	^ aQuestionCollection asSortedCollection: [ :a :b | a positiveVotesCount > b positiveVotesCount ]
 ]
