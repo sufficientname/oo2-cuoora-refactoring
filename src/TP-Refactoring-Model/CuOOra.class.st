@@ -34,7 +34,7 @@ CuOOra >> addUser: aUser [
 
 { #category : #retrieving }
 CuOOra >> averageVotes: aNumber [
-	^ (questions sum: [ :q | q positiveVotes size ]) / aNumber
+	^ (questions sum: [ :q | q positiveVotesCount ]) / aNumber
 ]
 
 { #category : #retrieving }
