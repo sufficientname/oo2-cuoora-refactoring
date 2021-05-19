@@ -189,6 +189,54 @@ QuestionRetriever>>retrieveQuestions: aUser
 	^ qRet reject: [ :q | q user = aUser ]
 ```
 
+Vemos una `Cadena de Mensajes` y `Codigo Duplicado` al tratar de obtener la cantidad de votos positivos de una publicacion, por lo que aplicamos `Hide Delegate`
+
+```smalltalk
+QuestionRetriever>>retrieveQuestions: aUser
+	| qRet temp followingCol topicsCol newsCol popularTCol averageVotes |
+	qRet := OrderedCollection new.
+	option = #social
+		ifTrue: [ followingCol := OrderedCollection new.
+			aUser following
+				do: [ :follow | followingCol addAll: follow questions ].
+			temp := followingCol
+				asSortedCollection: [ :a :b | a positiveVotesCount > b positiveVotesCount ].
+			qRet := temp last: (100 min: temp size) ].
+	option = #topics
+		ifTrue: [ topicsCol := OrderedCollection new.
+			aUser topics do: [ :topic | topicsCol addAll: topic questions ].
+			temp := topicsCol
+				asSortedCollection: [ :a :b | a positiveVotesCount > b positiveVotesCount ].
+			qRet := temp last: (100 min: temp size) ].
+	option = #news
+		ifTrue: [ newsCol := OrderedCollection new.
+			cuoora questions
+				do: [ :q | 
+					q timestamp asDate = Date today
+						ifTrue: [ newsCol add: q ] ].
+			temp := newsCol
+				asSortedCollection: [ :a :b | a positiveVotesCount > b positiveVotesCount ].
+			qRet := temp last: (100 min: temp size) ].
+	option = #popularToday
+		ifTrue: [ popularTCol := OrderedCollection new.
+			cuoora questions
+				do: [ :q | 
+					q timestamp asDate = Date today
+						ifTrue: [ popularTCol add: q ] ].
+			averageVotes := (cuoora questions
+				sum: [ :q | q positiveVotesCount ]) / popularTCol size.
+			temp := (popularTCol
+				select: [ :q | q positiveVotesCount >= averageVotes ])
+				asSortedCollection: [ :a :b | a positiveVotesCount > b positiveVotesCount ].
+			qRet := temp last: (100 min: temp size) ].
+	^ qRet reject: [ :q | q user = aUser ]
+```
+
+```smalltalk
+Publication>>positiveVotesCount
+	^ self positiveVotes size
+```
+
 Aplicamos `Consolidate Duplicate Conditional Fragments` para remover codigo repetido que se encuentra presente en todos las ramas del condicional.
 
 ```smalltalk
@@ -218,11 +266,11 @@ QuestionRetriever>>retrieveQuestions: aUser
 					q timestamp asDate = Date today
 						ifTrue: [ popularTCol add: q ] ].
 			averageVotes := (cuoora questions
-				sum: [ :q | q positiveVotes size ]) / popularTCol size.
+				sum: [ :q | q positiveVotesCount ]) / popularTCol size.
 			temp := popularTCol
-				select: [ :q | q positiveVotes size >= averageVotes ] ].
+				select: [ :q | q positiveVotesCount >= averageVotes ] ].
 	qRet := (temp
-		asSortedCollection: [ :a :b | a positiveVotes size > b positiveVotes size ])
+		asSortedCollection: [ :a :b | a positiveVotesCount > b positiveVotesCount ])
 		last: (100 min: temp size).
 	^ qRet reject: [ :q | q user = aUser ]
 ```
@@ -234,7 +282,7 @@ QuestionRetriever>>retrieveQuestions: aUser
 	| qRet temp |
 	temp := self getQuestionsFor: aUser.
 	qRet := (temp
-		asSortedCollection: [ :a :b | a positiveVotes size > b positiveVotes size ])
+		asSortedCollection: [ :a :b | a positiveVotesCount > b positiveVotesCount ])
 		last: (100 min: temp size).
 	^ qRet reject: [ :q | q user = aUser ]
 ```
@@ -247,7 +295,7 @@ QuestionRetriever>>retrieveQuestions: aUser
 	| questions |
 	questions := self getQuestionsFor: aUser.
 	^ ((questions
-		asSortedCollection: [ :a :b | a positiveVotes size > b positiveVotes size ])
+		asSortedCollection: [ :a :b | a positiveVotesCount > b positiveVotesCount ])
 		last: (100 min: questions size)) reject: [ :q | q user = aUser ]
 ```
 
@@ -263,24 +311,8 @@ QuestionRetriever>>retrieveQuestions: aUser
 	| questions |
 	questions := self getQuestionsFor: aUser.
 	^ ((questions
-		asSortedCollection: [ :a :b | a positiveVotes size > b positiveVotes size ])
-		last: (self questionsLimit min: questions size)) reject: [ :q | q user = aUser ]
-```
-
-Vemos una `Cadena de Mensajes` al tratar de obtener la cantidad de votos positivos de una publicacion, por lo que aplicamos `Hide Delegate`
-
-```smalltalk
-QuestionRetriever>>retrieveQuestions: aUser
-	| questions |
-	questions := self getQuestionsFor: aUser.
-	^ ((questions
 		asSortedCollection: [ :a :b | a positiveVotesCount > b positiveVotesCount ])
 		last: (self questionsLimit min: questions size)) reject: [ :q | q user = aUser ]
-```
-
-```smalltalk
-Publication>>positiveVotesCount
-	^ self positiveVotes size
 ```
 
 Aplicamos `Extract Method` para extraer la parte del metodo que limita la cantidad de preguntas
@@ -359,9 +391,9 @@ QuestionRetriever>>getQuestionsFor: aUser
 					q timestamp asDate = Date today
 						ifTrue: [ popularTCol add: q ] ].
 			averageVotes := (cuoora questions
-				sum: [ :q | q positiveVotes size ]) / popularTCol size.
+				sum: [ :q | q positiveVotesCount ]) / popularTCol size.
 			temp := popularTCol
-				select: [ :q | q positiveVotes size >= averageVotes ] ].
+				select: [ :q | q positiveVotesCount >= averageVotes ] ].
 	^ temp
 ```
 
@@ -401,10 +433,10 @@ PopularTodayQuestionRetriever>>getQuestionsFor: aUser
 		do: [ :q | 
 			q timestamp asDate = Date today
 				ifTrue: [ popularTCol add: q ] ].
-	averageVotes := (cuoora questions sum: [ :q | q positiveVotes size ])
+	averageVotes := (cuoora questions sum: [ :q | q positiveVotesCount ])
 		/ popularTCol size.
 	temp := popularTCol
-		select: [ :q | q positiveVotes size >= averageVotes ].
+		select: [ :q | q positiveVotesCount >= averageVotes ].
 	^ temp
 ```
 
@@ -451,7 +483,7 @@ Object subclass: #QuestionRetriever
 
 ## new:
 
-Vemos que esta clase reimplementa de forma erronea el metodo `new:`
+Vemos que esta clase reimplementa de forma erronea el metodo `#new:`
 
 ```smalltalk
 QuestionRetriever>>new: cuoora
@@ -526,10 +558,10 @@ PopularTodayQuestionRetriever>>getQuestionsFor: aUser
 		do: [ :q | 
 			q timestamp asDate = Date today
 				ifTrue: [ popularTCol add: q ] ].
-	averageVotes := (cuoora questions sum: [ :q | q positiveVotes size ])
+	averageVotes := (cuoora questions sum: [ :q | q positiveVotesCount ])
 		/ popularTCol size.
 	temp := popularTCol
-		select: [ :q | q positiveVotes size >= averageVotes ].
+		select: [ :q | q positiveVotesCount >= averageVotes ].
 	^ temp
 ```
 
@@ -545,16 +577,16 @@ PopularTodayQuestionRetriever>>getQuestionsFor: aUser
 				ifTrue: [ popularTCol add: q ] ].
 	averageVotes := self averageVotes: popularTCol size.
 	temp := popularTCol
-		select: [ :q | q positiveVotes size >= averageVotes ].
+		select: [ :q | q positiveVotesCount >= averageVotes ].
 	^ temp
 ```
 
 ```smalltalk
 PopularTodayQuestionRetriever>>averageVotes: aNumber
-	^ (cuoora questions sum: [ :q | q positiveVotes size ]) / aNumber
+	^ (cuoora questions sum: [ :q | q positiveVotesCount ]) / aNumber
 ```
 
-Podemos ver que el metodo `averageVotes:` de `PopularTodayQuestionRetriever` `Envidia  Atributos` de `cuoora`, por lo tanto aplicamos `Move Method` y lo movemos hacia la clase `CuOOra`
+Podemos ver que el metodo `PopularTodayQuestionRetriever>>#averageVotes:` `Envidia  Atributos` de `cuoora`, por lo tanto aplicamos `Move Method` y lo movemos hacia la clase `CuOOra`
 
 ```smalltalk
 PopularTodayQuestionRetriever>>getQuestionsFor: aUser
@@ -566,13 +598,13 @@ PopularTodayQuestionRetriever>>getQuestionsFor: aUser
 				ifTrue: [ popularTCol add: q ] ].
 	averageVotes := cuoora averageVotes: popularTCol size.
 	temp := popularTCol
-		select: [ :q | q positiveVotes size >= averageVotes ].
+		select: [ :q | q positiveVotesCount >= averageVotes ].
 	^ temp
 ```
 
 ```smalltalk
 CuOOra>>averageVotes: aNumber
-	^ (questions sum: [ :q | q positiveVotes size ]) / aNumber
+	^ (questions sum: [ :q | q positiveVotesCount ]) / aNumber
 ```
 
 Continuamos aplicando `Replace Temp With Query`
@@ -587,7 +619,7 @@ PopularTodayQuestionRetriever>>getQuestionsFor: aUser
 				ifTrue: [ popularTCol add: q ] ].
 	temp := popularTCol
 		select:
-			[ :q | q positiveVotes size >= (cuoora averageVotes: popularTCol size) ].
+			[ :q | q positiveVotesCount >= (cuoora averageVotes: popularTCol size) ].
 	^ temp
 ```
 
@@ -599,21 +631,10 @@ PopularTodayQuestionRetriever>>getQuestionsFor: aUser
 	popularTCol := cuoora questions
 		select: [ :q | q timestamp asDate = Date today ].
 	^ popularTCol
-		select: [ :q | q positiveVotes size >= (cuoora averageVotes: popularTCol size) ]
-```
-
-Aplicamos `Hide Delegate` para eliminar la `Cadena de Mensajes` al obtener la cantidad de votos positivos de una publicacion
-
-```smalltalk
-PopularTodayQuestionRetriever>>getQuestionsFor: aUser
-	| popularTCol |
-	popularTCol := cuoora questions
-		select: [ :q | q timestamp asDate = Date today ].
-	^ popularTCol
 		select: [ :q | q positiveVotesCount >= (cuoora averageVotes: popularTCol size) ]
 ```
 
-Tambien se observa `codigo duplicado` y una variable temporal innecesaria `popularTCol` al obtener las preguntas del dia, por lo tanto aplicamos `Replace Tempo With Query` 
+Se observa `codigo duplicado` y una variable temporal innecesaria `popularTCol` al obtener las preguntas del dia, por lo tanto aplicamos `Replace Tempo With Query` 
 
 ```smalltalk
 PopularTodayQuestionRetriever>>getQuestionsFor: aUser
