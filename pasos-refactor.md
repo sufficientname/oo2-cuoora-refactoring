@@ -259,7 +259,7 @@ QuestionRetriever>>questionsLimit
 ```
 
 ```smalltalk
-retrieveQuestions: aUser
+QuestionRetriever>>retrieveQuestions: aUser
 	| questions |
 	questions := self getQuestionsFor: aUser.
 	^ ((questions
@@ -267,47 +267,64 @@ retrieveQuestions: aUser
 		last: (self questionsLimit min: questions size)) reject: [ :q | q user = aUser ]
 ```
 
-Aplicamos `Extract Method`
-
-```smalltalk
-QuestionRetriever>>questionsLimitFor: aQuestionCollection
-	^ self questionsLimit min: aQuestionCollection size
-```
+Vemos una `Cadena de Mensajes` al tratar de obtener la cantidad de votos positivos de una publicacion, por lo que aplicamos `Hide Delegate`
 
 ```smalltalk
 QuestionRetriever>>retrieveQuestions: aUser
 	| questions |
 	questions := self getQuestionsFor: aUser.
 	^ ((questions
-		asSortedCollection: [ :a :b | a positiveVotes size > b positiveVotes size ])
-		last: (self questionsLimitFor: questions))
-		reject: [ :q | q user = aUser ]
+		asSortedCollection: [ :a :b | a positiveVotesCount > b positiveVotesCount ])
+		last: (self questionsLimit min: questions size)) reject: [ :q | q user = aUser ]
 ```
-
-Aplicamos `Extract Method`
 
 ```smalltalk
-QuestionRetriever>>limitAndSort: aQuestionCollection withoutQuestionsFrom: aUser
-	^ ((aQuestionCollection
-		asSortedCollection: [ :a :b | a positiveVotes size > b positiveVotes size ])
-		last: (self questionsLimitFor: aQuestionCollection))
-		reject: [ :q | q user = aUser ]
+Publication>>positiveVotesCount
+	^ self positiveVotes size
 ```
+
+Aplicamos `Extract Method` para extraer la parte del metodo que limita la cantidad de preguntas
 
 ```smalltalk
 QuestionRetriever>>retrieveQuestions: aUser
 	| questions |
 	questions := self getQuestionsFor: aUser.
-	^ self limitAndSort: questions withoutQuestionsFrom: aUser
+	^ (self
+		limitQuestions:
+			(questions
+				asSortedCollection: [ :a :b | a positiveVotesCount > b positiveVotesCount ]))
+		reject: [ :q | q user = aUser ]
 ```
 
-Aplicamos `Replace Temp With Query`
+```smalltalk
+QuestionRetriever>>limitQuestions: aQuestionCollection
+	^ aQuestionCollection
+		last: (self questionsLimit min: aQuestionCollection size)
+```
+
+Aplicamos `Extract Method` para extraer la parte del metodo que ordena las preguntas
 
 ```smalltalk
 QuestionRetriever>>retrieveQuestions: aUser
-	^ self
-		limitAndSort: (self getQuestionsFor: aUser)
-		withoutQuestionsFrom: aUser
+	| questions |
+	questions := self getQuestionsFor: aUser.
+	^ (self limitQuestions: (self sortQuestions: questions))
+		reject: [ :q | q user = aUser ]
+```
+
+```smalltalk
+QuestionRetriever>>sortQuestions: aQuestionCollection
+	^ aQuestionCollection
+		asSortedCollection: [ :a :b | a positiveVotesCount > b positiveVotesCount ]
+```
+
+Aplicamos `Replace Temp With Query` para remover la variable temporal `questions`
+
+```smalltalk
+QuestionRetriever>>retrieveQuestions: aUser
+	^ (self
+		limitQuestions: (self sortQuestions: (self getQuestionsFor: aUser)))
+		reject: [ :q | q user = aUser ]
 ```
 
 
@@ -482,6 +499,17 @@ NewsQuestionRetriever>>getQuestionsFor: aUser
 	^ cuoora questions select: [ :q | q timestamp asDate = Date today ]
 ```
 
+Vemos que `NewsQuestionRetriever` presenta `envidia de atributos` a `CuOOra` por lo tanto aplicamos `Extract Method` y seguidamente `Move Method`
+
+```smalltalk
+NewsQuestionRetriever>>getQuestionsFor: aUser
+	^ cuoora getTodayQuestions
+```
+
+```smalltalk
+CuOOra>>getTodayQuestions
+	^ self questions select: [ :q | q timestamp asDate = Date today ]
+```
 
 
 # PopularTodayQuestionRetriever
@@ -526,7 +554,7 @@ PopularTodayQuestionRetriever>>averageVotes: aNumber
 	^ (cuoora questions sum: [ :q | q positiveVotes size ]) / aNumber
 ```
 
-Podemos ver que el metodo `averageVotes:` de PopularTodayQuestionRetriever `Envidia  Atributos` de `cuoora`, por lo tanto aplicamos `Move Method` y lo movemos hacia la clase `CuOOra`
+Podemos ver que el metodo `averageVotes:` de `PopularTodayQuestionRetriever` `Envidia  Atributos` de `cuoora`, por lo tanto aplicamos `Move Method` y lo movemos hacia la clase `CuOOra`
 
 ```smalltalk
 PopularTodayQuestionRetriever>>getQuestionsFor: aUser
@@ -574,6 +602,41 @@ PopularTodayQuestionRetriever>>getQuestionsFor: aUser
 		select: [ :q | q positiveVotes size >= (cuoora averageVotes: popularTCol size) ]
 ```
 
+Aplicamos `Hide Delegate` para eliminar la `Cadena de Mensajes` al obtener la cantidad de votos positivos de una publicacion
+
+```smalltalk
+PopularTodayQuestionRetriever>>getQuestionsFor: aUser
+	| popularTCol |
+	popularTCol := cuoora questions
+		select: [ :q | q timestamp asDate = Date today ].
+	^ popularTCol
+		select: [ :q | q positiveVotesCount >= (cuoora averageVotes: popularTCol size) ]
+```
+
+Tambien se observa `codigo duplicado` y una variable temporal innecesaria `popularTCol` al obtener las preguntas del dia, por lo tanto aplicamos `Replace Tempo With Query` 
+
+```smalltalk
+PopularTodayQuestionRetriever>>getQuestionsFor: aUser
+	^ cuoora getTodayQuestions
+		select: [ :q | 
+			q positiveVotesCount
+				>= (cuoora averageVotes: cuoora getTodayQuestions size) ]
+```
+
+Vemos que el metodo presenta `envidia de atributos` a `CuOOra` por lo tanto aplicamos `Extract Method` seguido de `Move Method`
+
+```smalltalk
+PopularTodayQuestionRetriever>>getQuestionsFor: aUser
+	^ cuoora getPopularTodayQuestions
+```
+
+```smalltalk
+CuOOra>>getPopularTodayQuestions
+	^ self getTodayQuestions
+		select: [ :q | 
+			q positiveVotesCount
+				>= (self averageVotes: self getTodayQuestions size) ]
+```
 
 
 # SocialQuestionRetriever
@@ -605,6 +668,18 @@ Seguido de `Replace Temp with Query`
 ```smalltalk
 SocialQuestionRetriever>>getQuestionsFor: aUser
 	^ aUser following flatCollect: [ :follow | follow questions ]
+```
+
+Notamos que el metodo presenta `envidia de atributos` a `User` por lo tanto, aplicamos `Extract Method` seguido de `Move Method`
+
+```smalltalk
+SocialQuestionRetriever>>getQuestionsFor: aUser
+	^ aUser getFollowingUsersQuestions
+```
+
+```smalltalk
+User>>getFollowingUsersQuestions
+	^ following flatCollect: [ :follow | follow questions ]
 ```
 
 
@@ -639,4 +714,14 @@ TopicsQuestionRetriever>>getQuestionsFor: aUser
 	^ aUser topics flatCollect: [ :topic | topic questions ]
 ```
 
+Notamos que el metodo presenta `envidia de atributos` a `User` por lo tanto, aplicamos `Extract Method` seguido de `Move Method`
 
+```smalltalk
+TopicsQuestionRetriever>>getQuestionsFor: aUser
+	^ aUser getFollowingTopicsQuestions
+```
+
+```smalltalk
+User>>getFollowingTopicsQuestions
+	^ topics flatCollect: [ :topic | topic questions ]
+```
